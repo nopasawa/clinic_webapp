@@ -116,29 +116,15 @@ def book():
         flash('กรุณาเลือกวันและเวลาที่ถูกต้อง', 'danger')
         return redirect(url_for('index'))
     app_date, app_time = slot.split('|')
-
-    # Check for duplicate booking by anyone
-    existing_appt = db.execute(
-        "SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'Confirmed'",
-        (doctor_id, app_date, app_time)
-    ).fetchone()
+    existing_appt = db.execute("SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'Confirmed'", (doctor_id, app_date, app_time)).fetchone()
     if existing_appt:
         flash('ขออภัย คิวเวลานี้เพิ่งถูกจองไป กรุณาเลือกเวลาอื่น', 'danger')
         return redirect(url_for('index'))
-
-    # Check for duplicate booking by the same patient
-    self_booked_appt = db.execute(
-        "SELECT id FROM appointments WHERE patient_id = ? AND doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'Confirmed'",
-        (patient_id, doctor_id, app_date, app_time)
-    ).fetchone()
+    self_booked_appt = db.execute("SELECT id FROM appointments WHERE patient_id = ? AND doctor_id = ? AND appointment_date = ? AND appointment_time = ? AND status = 'Confirmed'", (patient_id, doctor_id, app_date, app_time)).fetchone()
     if self_booked_appt:
         flash('คุณได้จองคิวนี้ไปแล้ว ไม่สามารถจองซ้ำได้', 'warning')
         return redirect(url_for('index'))
-
-    db.execute(
-        'INSERT INTO appointments (patient_id, doctor_id, subject_id, appointment_date, appointment_time, status) VALUES (?, ?, ?, ?, ?, ?)',
-        (patient_id, doctor_id, subject_id, app_date, app_time, 'Confirmed')
-    )
+    db.execute('INSERT INTO appointments (patient_id, doctor_id, subject_id, appointment_date, appointment_time, status) VALUES (?, ?, ?, ?, ?, ?)', (patient_id, doctor_id, subject_id, app_date, app_time, 'Confirmed'))
     db.commit()
     flash('การนัดหมายของคุณได้รับการยืนยัน!', 'success')
     return redirect(url_for('my_appointments'))
@@ -147,14 +133,11 @@ def book():
 @login_required(role="patient")
 def my_appointments():
     db = get_db()
-    patient_id = session['user_id']
     appointments = db.execute("""
         SELECT a.id, d.name AS doctor_name, s.title AS subject_title, a.appointment_date, a.appointment_time, a.status
-        FROM appointments a
-        JOIN doctors d ON a.doctor_id = d.id
-        LEFT JOIN appointment_subjects s ON a.subject_id = s.id
+        FROM appointments a JOIN doctors d ON a.doctor_id = d.id LEFT JOIN appointment_subjects s ON a.subject_id = s.id
         WHERE a.patient_id = ? ORDER BY a.appointment_date DESC, a.appointment_time DESC
-    """, (patient_id,)).fetchall()
+    """, (session['user_id'],)).fetchall()
     return render_template('my_appointments.html', appointments=appointments)
 
 # --- Staff & Admin Routes ---
@@ -165,14 +148,22 @@ def search_appointments():
     appointments = None
     search_phone = ""
     if request.method == 'POST':
-        search_phone = request.form['phone']
+        search_phone = request.form.get('phone', '')
         appointments = db.execute("""
             SELECT a.id, p.name AS patient_name, d.name AS doctor_name, a.appointment_date, a.appointment_time, a.status
             FROM appointments a JOIN patients p ON a.patient_id = p.id JOIN doctors d ON a.doctor_id = d.id
             WHERE p.phone = ? ORDER BY a.appointment_date DESC, a.appointment_time DESC
         """, (search_phone,)).fetchall()
-        if not appointments: flash(f'ไม่พบข้อมูลนัดหมายสำหรับเบอร์ {search_phone}', 'warning')
+        if not appointments and search_phone: flash(f'ไม่พบข้อมูลนัดหมายสำหรับเบอร์ {search_phone}', 'warning')
     return render_template('search_appointments.html', appointments=appointments, search_phone=search_phone)
+
+@app.route('/checkout/<int:appointment_id>', methods=['POST'])
+@login_required(role="staff,admin")
+def checkout_appointment(appointment_id):
+    db = get_db()
+    db.execute("UPDATE appointments SET status = 'รับบริการเรียบร้อย' WHERE id = ?", (appointment_id,)); db.commit()
+    flash(f'บันทึกการเข้ารับบริการของนัดหมาย ID {appointment_id} สำเร็จ', 'success')
+    return redirect(request.referrer or url_for('search_appointments'))
 
 @app.route('/cancel/<int:appointment_id>', methods=['POST'])
 @login_required()
@@ -183,13 +174,11 @@ def cancel_appointment(appointment_id):
         flash('ไม่พบข้อมูลการนัดหมายนี้', 'danger')
         return redirect(url_for('index'))
     if session['role'] == 'patient' and session['user_id'] == appt['patient_id']:
-        db.execute("UPDATE appointments SET status = 'Cancelled' WHERE id = ?", (appointment_id,))
-        db.commit()
+        db.execute("UPDATE appointments SET status = 'Cancelled' WHERE id = ?", (appointment_id,)); db.commit()
         flash('ยกเลิกการนัดหมายสำเร็จ', 'success')
         return redirect(url_for('my_appointments'))
     elif session['role'] in ['staff', 'admin']:
-        db.execute("UPDATE appointments SET status = 'Cancelled' WHERE id = ?", (appointment_id,))
-        db.commit()
+        db.execute("UPDATE appointments SET status = 'Cancelled' WHERE id = ?", (appointment_id,)); db.commit()
         flash(f'ยกเลิกการนัดหมาย ID {appointment_id} สำเร็จ', 'success')
         return redirect(request.referrer or url_for('search_appointments'))
     else:
@@ -208,18 +197,28 @@ def manage_doctors():
     db = get_db()
     if request.method == 'POST':
         name, specialty = request.form['name'], request.form['specialty']
-        days_selected = request.form.getlist('days')
-        start_time, end_time = request.form['start_time'], request.form['end_time']
+        days_selected, start_time, end_time = request.form.getlist('days'), request.form['start_time'], request.form['end_time']
         if days_selected and start_time and end_time:
             available_time = f"{', '.join(days_selected)} | {start_time} - {end_time}"
         else:
             available_time = "ไม่ได้ระบุ"
-        db.execute('INSERT INTO doctors (name, specialty, available_time) VALUES (?, ?, ?)', (name, specialty, available_time))
-        db.commit()
+        db.execute('INSERT INTO doctors (name, specialty, available_time) VALUES (?, ?, ?)', (name, specialty, available_time)); db.commit()
         flash(f'เพิ่มข้อมูลแพทย์ "{name}" สำเร็จ', 'success')
         return redirect(url_for('manage_doctors'))
     doctors = db.execute('SELECT * FROM doctors ORDER BY id').fetchall()
     return render_template('doctors.html', doctors=doctors)
+
+@app.route('/doctor/delete/<int:doctor_id>', methods=['POST'])
+@login_required(role="admin")
+def delete_doctor(doctor_id):
+    db = get_db()
+    appointments = db.execute("SELECT id FROM appointments WHERE doctor_id = ? AND status = 'Confirmed'", (doctor_id,)).fetchall()
+    if appointments:
+        flash('ไม่สามารถลบแพทย์ได้ เนื่องจากยังมีนัดหมายค้างอยู่', 'danger')
+    else:
+        db.execute("DELETE FROM doctors WHERE id = ?", (doctor_id,)); db.commit()
+        flash('ลบข้อมูลแพทย์สำเร็จ', 'success')
+    return redirect(url_for('manage_doctors'))
 
 @app.route('/subjects', methods=['GET', 'POST'])
 @login_required(role="admin")
@@ -263,8 +262,9 @@ def get_doctor_slots(doctor_id):
             slot_time = datetime.combine(current_date, start_time)
             end_of_day = datetime.combine(current_date, end_time)
             while slot_time < end_of_day:
-                date_str, time_str, slot_key = slot_time.strftime('%Y-%m-%d'), slot_time.strftime('%H:%M'), f"{slot_time.strftime('%Y-%m-%d')}|{slot_time.strftime('%H:%M')}"
-                if slot_key not in all_booked_slots:
+                date_str, time_str = slot_time.strftime('%Y-%m-%d'), slot_time.strftime('%H:%M')
+                slot_key = f"{date_str}|{time_str}"
+                if slot_key not in all_booked_slots or slot_key in user_booked_slots:
                     available_slots_by_date[date_str].append({"time": time_str, "booked_by_user": slot_key in user_booked_slots})
                 slot_time += slot_interval
     return jsonify(available_slots_by_date)
@@ -275,10 +275,7 @@ def api_appointments():
     db = get_db()
     appts_query = db.execute("""
         SELECT p.name as patient_name, d.name as doctor_name, s.title as subject_title, a.appointment_date, a.appointment_time
-        FROM appointments a
-        JOIN patients p ON a.patient_id = p.id
-        JOIN doctors d ON a.doctor_id = d.id
-        LEFT JOIN appointment_subjects s ON a.subject_id = s.id
+        FROM appointments a JOIN patients p ON a.patient_id = p.id JOIN doctors d ON a.doctor_id = d.id LEFT JOIN appointment_subjects s ON a.subject_id = s.id
         WHERE a.status = 'Confirmed'
     """).fetchall()
     events = [{'title': f"นพ. {a['doctor_name']}", 'start': f"{a['appointment_date']}T{a['appointment_time']}", 'color': '#007bff',

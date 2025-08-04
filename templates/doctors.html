@@ -6,7 +6,7 @@
     <h2>จัดการข้อมูลแพทย์</h2>
     <div class="card">
         <h3>เพิ่มแพทย์ใหม่</h3>
-        <form method="POST">
+        <form method="POST" action="{{ url_for('manage_doctors') }}">
             <label for="name">ชื่อ-สกุล แพทย์</label>
             <input type="text" id="name" name="name" required>
             
@@ -43,7 +43,15 @@
     <h3>รายชื่อแพทย์ทั้งหมด</h3>
     <div class="table-container">
         <table>
-            <thead><tr><th>ID</th><th>ชื่อ-สกุล</th><th>สาขาความเชี่ยวชาญ</th><th>ตารางเวลา</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ชื่อ-สกุล</th>
+                    <th>สาขาความเชี่ยวชาญ</th>
+                    <th>ตารางเวลา</th>
+                    <th style="width: 100px;">จัดการ</th>
+                </tr>
+            </thead>
             <tbody>
                 {% for doc in doctors %}
                 <tr>
@@ -51,6 +59,11 @@
                     <td>{{ doc.name }}</td>
                     <td>{{ doc.specialty }}</td>
                     <td>{{ doc.available_time }}</td>
+                    <td>
+                        <form action="{{ url_for('delete_doctor', doctor_id=doc.id) }}" method="POST" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่จะลบแพทย์ท่านนี้?')">
+                            <button type="submit" class="btn btn-danger">ลบ</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -59,12 +72,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        // เรียกใช้ Flatpickr กับทุก element ที่มี class "timepicker"
         flatpickr(".timepicker", {
-            enableTime: true,    // เปิดใช้งานโหมดเลือกเวลา
-            noCalendar: true,    // **สำคัญ: ไม่ต้องแสดงปฏิทิน**
-            dateFormat: "H:i",   // รูปแบบข้อมูลเป็น 24 ชั่วโมง (เช่น 14:30)
-            time_24hr: true      // กำหนดให้ตัวเลือกเป็นแบบ 24 ชั่วโมง
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true
         });
     </script>
 {% endblock %}

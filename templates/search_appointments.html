@@ -7,9 +7,9 @@
         <button type="submit" class="btn">ค้นหา</button>
     </form>
     
-    {% if appointments %}
+    {% if appointments is not none %}
     <hr>
-    <h3>ผลการค้นหาสำหรับเบอร์ {{ search_phone }}</h3>
+    <h3>ผลการค้นหาสำหรับเบอร์ {{ search_phone or 'ทั้งหมด' }}</h3>
     <div class="table-container">
         <table>
             <thead>
@@ -18,7 +18,7 @@
                     <th>แพทย์</th>
                     <th>วันที่/เวลา</th>
                     <th>สถานะ</th>
-                    <th>จัดการ</th>
+                    <th style="width: 220px;">จัดการ</th>
                 </tr>
             </thead>
             <tbody>
@@ -27,12 +27,19 @@
                     <td>{{ appt.patient_name }}</td>
                     <td>{{ appt.doctor_name }}</td>
                     <td>{{ appt.appointment_date }} {{ appt.appointment_time }}</td>
-                    <td><span class="status-{{ appt.status.lower() }}">{{ appt.status }}</span></td>
                     <td>
+                        <span class="status-{{ appt.status | replace(' ', '-') | lower }}">{{ appt.status }}</span>
+                    </td>
+                    <td style="display: flex; gap: 10px;">
                         {% if appt.status == 'Confirmed' %}
-                        <form action="{{ url_for('cancel_appointment', appointment_id=appt.id) }}" method="POST">
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('ยืนยันการยกเลิกนัดหมาย?')">ยกเลิก</button>
-                        </form>
+                            <form action="{{ url_for('checkout_appointment', appointment_id=appt.id) }}" method="POST">
+                                <button type="submit" class="btn">เข้ารับบริการ</button>
+                            </form>
+                            <form action="{{ url_for('cancel_appointment', appointment_id=appt.id) }}" method="POST" onsubmit="return confirm('คุณแน่ใจหรือไม่ที่จะยกเลิกนัดหมายนี้?')">
+                                <button type="submit" class="btn btn-danger">ยกเลิก</button>
+                            </form>
+                        {% else %}
+                            <span>-</span>
                         {% endif %}
                     </td>
                 </tr>
