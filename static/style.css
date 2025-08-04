@@ -1,0 +1,122 @@
+/* static/style.css */
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; }
+.container { max-width: 960px; margin: 20px auto; padding: 0 20px; }
+nav { background-color: #007bff; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+nav .brand { font-size: 1.5rem; font-weight: bold; color: white; text-decoration: none; }
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; }
+nav ul li a { color: white; text-decoration: none; padding: 0.5rem 1rem; display: block; }
+nav ul li a:hover { background-color: #0056b3; border-radius: 4px; }
+nav .user-info { padding: 0.5rem 1rem; color: #d1e7ff; }
+nav .btn-logout { background-color: #dc3545; border-radius: 4px; }
+.card { background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 2rem; }
+label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+input[type="text"], input[type="tel"], input[type="date"], input[type="time"], input[type="password"], select { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
+.btn { background-color: #007bff; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; text-align: center; display: inline-block; text-decoration: none;}
+.btn:hover { background-color: #0056b3; }
+.btn-danger { background-color: #dc3545; }
+.btn-danger:hover { background-color: #c82333; }
+.alert { padding: 1rem; margin-top: 1rem; border-radius: 4px; border: 1px solid transparent; }
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+.alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+.alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+.table-container { overflow-x: auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }
+thead { background-color: #e9ecef; }
+.status-confirmed { color: #28a745; font-weight: bold; }
+.status-cancelled { color: #dc3545; text-decoration: line-through; }
+.mt-3 { margin-top: 1.5rem; }
+.text-center { text-align: center; }
+hr { border: none; border-top: 1px solid #eee; margin: 2rem 0; }
+footer { text-align: center; padding: 1rem; margin-top: 2rem; color: #666; }
+/* static/style.css */
+
+/* Doctor Schedule Form Grid */
+.schedule-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+.schedule-days {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.schedule-days label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+}
+.schedule-time {
+    display: flex;
+    gap: 20px;
+}
+/* static/style.css */
+
+/* --- Modal (Popup) Styles --- */
+.modal {
+  display: none; /* ซ่อนไว้เป็นค่าเริ่มต้น */
+  position: fixed; 
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5); /* พื้นหลังสีดำโปร่งแสง */
+  animation: fadeIn 0.3s;
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto;
+  padding: 20px 30px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  animation: slideIn 0.3s;
+}
+
+.close-button {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+}
+
+.modal-content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {opacity: 0} 
+  to {opacity: 1}
+}
+
+@keyframes slideIn {
+  from {top: -100px; opacity: 0}
+  to {top: 0; opacity: 1}
+}

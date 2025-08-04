@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h2>ลงทะเบียนสำหรับคนไข้ใหม่</h2>
+    <form method="POST" class="card">
+        <label for="name">ชื่อ-สกุล</label>
+        <input type="text" id="name" name="name" required>
+        <label for="phone">เบอร์โทรศัพท์</label>
+        <input type="tel" id="phone" name="phone" required>
+        <label for="password">รหัสผ่าน</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit" class="btn">ลงทะเบียน</button>
+        <p class="text-center mt-3">มีบัญชีแล้ว? <a href="{{ url_for('login') }}">เข้าสู่ระบบที่นี่</a></p>
+    </form>
+{% endblock %}

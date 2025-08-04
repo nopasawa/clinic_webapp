@@ -1,0 +1,161 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    /* CSS สำหรับจัดรูปแบบการ์ดเลือกวันและเวลา */
+    #slots-container { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+    .day-slot-card {
+        flex: 1 1 250px; /* ให้การ์ดยืดหยุ่นและมีขนาดพื้นฐาน 250px */
+        padding: 1.5rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        background-color: #fff;
+        transition: all 0.2s ease-in-out;
+    }
+    .day-slot-card.selected {
+        border-color: #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    .day-slot-card h4 { margin-top: 0; margin-bottom: 1rem; }
+    .day-slot-card select { width: 100%; }
+    .day-slot-card option:disabled { color: #aaa; background-color: #f4f4f4; }
+</style>
+
+<h2>จองคิวนัดหมายแพทย์</h2>
+<form action="{{ url_for('book') }}" method="POST" class="card">
+    <label for="doctor_id">เลือกแพทย์</label>
+    <select id="doctor_id" name="doctor_id" required>
+        <option value="">-- กรุณาเลือกแพทย์ --</option>
+        {% for doctor in doctors %}
+        <option value="{{ doctor.id }}">{{ doctor.name }} ({{ doctor.specialty }})</option>
+        {% endfor %}
+    </select>
+
+    <label for="subject_id" class="mt-3">หัวข้อการนัดหมาย</label>
+    <select id="subject_id" name="subject_id" required>
+        <option value="">-- กรุณาเลือกหัวข้อ --</option>
+        {% for subject in subjects %}
+        <option value="{{ subject.id }}">{{ subject.title }}</option>
+        {% endfor %}
+    </select>
+    
+    <hr>
+    <label>เลือกวันที่ว่าง</label>
+    <div id="slots-container">
+        <p id="slots-placeholder" style="color: #888;">กรุณาเลือกแพทย์เพื่อแสดงเวลาที่ว่าง</p>
+    </div>
+
+    <input type="hidden" name="appointment_slot" id="selected-slot" required>
+    
+    <button type="submit" class="btn mt-3" id="submit-btn" disabled>ยืนยันการจอง</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const doctorSelect = document.getElementById('doctor_id');
+    const slotsContainer = document.getElementById('slots-container');
+    const slotsPlaceholder = document.getElementById('slots-placeholder');
+    const submitBtn = document.getElementById('submit-btn');
+    const hiddenSlotInput = document.getElementById('selected-slot');
+
+    doctorSelect.addEventListener('change', function() {
+        const doctorId = this.value;
+        slotsContainer.innerHTML = ''; // ล้างค่าเก่า
+        hiddenSlotInput.value = ''; // ล้างค่าที่ซ่อนไว้
+        submitBtn.disabled = true; // ปิดปุ่มยืนยัน
+
+        if (!doctorId) {
+            slotsContainer.appendChild(slotsPlaceholder);
+            slotsPlaceholder.textContent = 'กรุณาเลือกแพทย์เพื่อแสดงเวลาที่ว่าง';
+            return;
+        }
+
+        slotsPlaceholder.textContent = 'กำลังค้นหาเวลาที่ว่าง...';
+        slotsContainer.appendChild(slotsPlaceholder);
+        
+        fetch(`/api/doctor/${doctorId}/slots`)
+            .then(response => response.json())
+            .then(data => {
+                slotsContainer.innerHTML = ''; // ล้าง "กำลังโหลด..."
+                const dates = Object.keys(data);
+
+                if (dates.length === 0) {
+                    slotsPlaceholder.textContent = 'ขออภัย แพทย์ท่านนี้ยังไม่มีคิวว่าง';
+                    slotsContainer.appendChild(slotsPlaceholder);
+                    return;
+                }
+
+                // สร้างการ์ดสำหรับแต่ละวัน
+                dates.forEach(date => {
+                    const timeSlots = data[date];
+                    if (timeSlots.length === 0) return;
+
+                    const card = document.createElement('div');
+                    card.className = 'day-slot-card';
+                    card.dataset.date = date; 
+
+                    const dateObj = new Date(date);
+                    const formattedDate = dateObj.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    const title = document.createElement('h4');
+                    title.textContent = formattedDate;
+                    card.appendChild(title);
+
+                    const timeSelect = document.createElement('select');
+                    timeSelect.className = 'time-select';
+                    
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'เลือกเวลา';
+                    timeSelect.appendChild(defaultOption);
+
+                    timeSlots.forEach(slot => {
+                        const option = document.createElement('option');
+                        option.value = slot.time;
+                        
+                        if (slot.booked_by_user) {
+                            option.textContent = `${slot.time} (จองแล้ว)`;
+                            option.disabled = true; // ปิดการเลือกเวลานี้
+                        } else {
+                            option.textContent = slot.time;
+                        }
+                        timeSelect.appendChild(option);
+                    });
+                    
+                    card.appendChild(timeSelect);
+                    slotsContainer.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching slots:', error);
+                slotsContainer.innerHTML = '<p style="color: red;">เกิดข้อผิดพลาดในการดึงข้อมูล</p>';
+            });
+    });
+
+    // จัดการเมื่อมีการเลือกเวลาจาก Dropdown
+    slotsContainer.addEventListener('change', function(event) {
+        if (event.target.classList.contains('time-select')) {
+            const selectedCard = event.target.closest('.day-slot-card');
+            const selectedDate = selectedCard.dataset.date;
+            const selectedTime = event.target.value;
+
+            document.querySelectorAll('.day-slot-card').forEach(card => card.classList.remove('selected'));
+
+            if (selectedTime) {
+                selectedCard.classList.add('selected');
+                hiddenSlotInput.value = `${selectedDate}|${selectedTime}`;
+                submitBtn.disabled = false;
+            } else {
+                hiddenSlotInput.value = '';
+                submitBtn.disabled = true;
+            }
+
+            document.querySelectorAll('.time-select').forEach(select => {
+                if (select !== event.target) {
+                    select.value = '';
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

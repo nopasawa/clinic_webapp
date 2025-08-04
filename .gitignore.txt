@@ -1,0 +1,10 @@
+# Database file
+clinic.db
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment (ถ้ามี)
+.venv/
+venv/

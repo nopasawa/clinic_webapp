@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h2>สำหรับเจ้าหน้าที่</h2>
+    <form method="POST" class="card">
+        <label for="username">ชื่อผู้ใช้</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">รหัสผ่าน</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit" class="btn">ล็อกอิน</button>
+    </form>
+{% endblock %}

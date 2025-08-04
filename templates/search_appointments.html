@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h2>ค้นหาและจัดการนัดหมาย</h2>
+    <form method="POST" class="card">
+        <label for="phone">กรอกเบอร์โทรศัพท์คนไข้เพื่อค้นหา</label>
+        <input type="tel" id="phone" name="phone" value="{{ search_phone }}" required>
+        <button type="submit" class="btn">ค้นหา</button>
+    </form>
+    
+    {% if appointments %}
+    <hr>
+    <h3>ผลการค้นหาสำหรับเบอร์ {{ search_phone }}</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>คนไข้</th>
+                    <th>แพทย์</th>
+                    <th>วันที่/เวลา</th>
+                    <th>สถานะ</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appt in appointments %}
+                <tr>
+                    <td>{{ appt.patient_name }}</td>
+                    <td>{{ appt.doctor_name }}</td>
+                    <td>{{ appt.appointment_date }} {{ appt.appointment_time }}</td>
+                    <td><span class="status-{{ appt.status.lower() }}">{{ appt.status }}</span></td>
+                    <td>
+                        {% if appt.status == 'Confirmed' %}
+                        <form action="{{ url_for('cancel_appointment', appointment_id=appt.id) }}" method="POST">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('ยืนยันการยกเลิกนัดหมาย?')">ยกเลิก</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h2>ประวัติการนัดหมายของคุณ</h2>
+    {% if appointments %}
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>แพทย์</th>
+                <th>หัวข้อการนัดหมาย</th> <th>วันที่</th>
+                <th>เวลา</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appt in appointments %}
+            <tr>
+                <td>{{ appt.doctor_name }}</td>
+                <td>{{ appt.subject_title or 'N/A' }}</td> <td>{{ appt.appointment_date }}</td>
+                <td>{{ appt.appointment_time }}</td>
+                <td><span class="status-{{ appt.status.lower() }}">{{ appt.status }}</span></td>
+                <td>
+                    {% if appt.status == 'Confirmed' %}
+                    <form action="{{ url_for('cancel_appointment', appointment_id=appt.id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('ยืนยันการยกเลิกนัดหมาย?')">ยกเลิก</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+    {% else %}
+    <p>คุณยังไม่มีรายการนัดหมาย</p>
+    {% endif %}
+{% endblock %}

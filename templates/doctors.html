@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <h2>จัดการข้อมูลแพทย์</h2>
+    <div class="card">
+        <h3>เพิ่มแพทย์ใหม่</h3>
+        <form method="POST">
+            <label for="name">ชื่อ-สกุล แพทย์</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="specialty">สาขาความเชี่ยวชาญ</label>
+            <input type="text" id="specialty" name="specialty" required>
+            
+            <label>วัน-เวลาที่ออกตรวจ</label>
+            <div class="schedule-grid">
+                <div class="schedule-days">
+                    <label><input type="checkbox" name="days" value="จันทร์"> จันทร์</label>
+                    <label><input type="checkbox" name="days" value="อังคาร"> อังคาร</label>
+                    <label><input type="checkbox" name="days" value="พุธ"> พุธ</label>
+                    <label><input type="checkbox" name="days" value="พฤหัสบดี"> พฤหัสบดี</label>
+                    <label><input type="checkbox" name="days" value="ศุกร์"> ศุกร์</label>
+                    <label><input type="checkbox" name="days" value="เสาร์"> เสาร์</label>
+                    <label><input type="checkbox" name="days" value="อาทิตย์"> อาทิตย์</label>
+                </div>
+                <div class="schedule-time">
+                    <div>
+                        <label for="start_time">เวลาเริ่ม</label>
+                        <input type="text" id="start_time" name="start_time" class="timepicker" placeholder="HH:MM" required>
+                    </div>
+                    <div>
+                        <label for="end_time">เวลาสิ้นสุด</label>
+                        <input type="text" id="end_time" name="end_time" class="timepicker" placeholder="HH:MM" required>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn mt-3">เพิ่มแพทย์</button>
+        </form>
+    </div>
+    <hr>
+    <h3>รายชื่อแพทย์ทั้งหมด</h3>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>ID</th><th>ชื่อ-สกุล</th><th>สาขาความเชี่ยวชาญ</th><th>ตารางเวลา</th></tr></thead>
+            <tbody>
+                {% for doc in doctors %}
+                <tr>
+                    <td>{{ doc.id }}</td>
+                    <td>{{ doc.name }}</td>
+                    <td>{{ doc.specialty }}</td>
+                    <td>{{ doc.available_time }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // เรียกใช้ Flatpickr กับทุก element ที่มี class "timepicker"
+        flatpickr(".timepicker", {
+            enableTime: true,    // เปิดใช้งานโหมดเลือกเวลา
+            noCalendar: true,    // **สำคัญ: ไม่ต้องแสดงปฏิทิน**
+            dateFormat: "H:i",   // รูปแบบข้อมูลเป็น 24 ชั่วโมง (เช่น 14:30)
+            time_24hr: true      // กำหนดให้ตัวเลือกเป็นแบบ 24 ชั่วโมง
+        });
+    </script>
+{% endblock %}

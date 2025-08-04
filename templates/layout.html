@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจองคิวคลินิก</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}" class="brand">คลินิกออนไลน์</a>
+        <ul>
+            {% if session.user_id %}
+                {% if session.role == 'patient' %}
+                    <li><a href="{{ url_for('index') }}">จองคิว</a></li>
+                    <li><a href="{{ url_for('my_appointments') }}">นัดหมายของฉัน</a></li>
+                {% endif %}
+                {% if session.role in ['staff', 'admin'] %}
+                     <li><a href="{{ url_for('search_appointments') }}">ค้นหานัดหมาย</a></li>
+                     <li><a href="{{ url_for('calendar_view') }}">ปฏิทินนัดหมาย</a></li>
+                {% endif %}
+                 {% if session.role == 'admin' %}
+                    <li><a href="{{ url_for('manage_doctors') }}">จัดการแพทย์</a></li>
+                    <li><a href="{{ url_for('manage_subjects') }}">จัดการหัวข้อนัด</a></li>
+                {% endif %}
+                <li class="user-info">สวัสดี, {{ session.user_name }}</li>
+                <li><a href="{{ url_for('logout') }}" class="btn-logout">ออกจากระบบ</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}">เข้าสู่ระบบคนไข้</a></li>
+                <li><a href="{{ url_for('register') }}">ลงทะเบียน</a></li>
+                <li><a href="{{ url_for('staff_login') }}">สำหรับเจ้าหน้าที่</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer><p>&copy; 2025 Clinic Booking System</p></footer>
+</body>
+</html>

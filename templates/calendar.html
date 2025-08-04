@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h2>ปฏิทินนัดหมายรวม</h2>
+    <div class="card">
+        <div id='calendar'></div>
+    </div>
+
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3>รายละเอียดการนัดหมาย</h3>
+            <hr>
+            <p><strong>คนไข้:</strong> <span id="modal-patient-name"></span></p>
+            <p><strong>แพทย์ผู้ตรวจ:</strong> <span id="modal-doctor-name"></span></p>
+            <p><strong>หัวข้อ:</strong> <span id="modal-subject"></span></p>
+            <p><strong>วันที่นัด:</strong> <span id="modal-date"></span></p>
+            <p><strong>เวลานัด:</strong> <span id="modal-time"></span></p>
+        </div>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var modal = document.getElementById('appointmentModal');
+        var closeBtn = document.querySelector('.close-button');
+
+        // ฟังก์ชันสำหรับปิด Modal
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        closeBtn.onclick = closeModal;
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          locale: 'th',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+          height: 'auto',
+          events: '/api/appointments',
+
+          // จัดการ Event เมื่อถูกคลิก
+          eventClick: function(info) {
+            info.jsEvent.preventDefault(); // ป้องกันการเปลี่ยนหน้าของเบราว์เซอร์
+
+            // ดึงข้อมูลจาก extendedProps ที่เราส่งมาจาก API
+            var props = info.event.extendedProps;
+
+            // นำข้อมูลไปใส่ใน Modal
+            document.getElementById('modal-patient-name').textContent = props.patientName;
+            document.getElementById('modal-doctor-name').textContent = props.doctorName;
+            document.getElementById('modal-subject').textContent = props.subjectTitle;
+            document.getElementById('modal-date').textContent = props.appointmentDate;
+            document.getElementById('modal-time').textContent = props.appointmentTime;
+
+            // แสดง Modal
+            modal.style.display = 'block';
+          }
+        });
+
+        // แสดงผลปฏิทิน
+        calendar.render();
+      });
+    </script>
+{% endblock %}
